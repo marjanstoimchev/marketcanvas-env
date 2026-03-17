@@ -287,27 +287,43 @@ We chose a **high-level semantic action space** with 7 action types:
 
 ## 3. Reward Function
 
-The reward is an **additive heuristic** computed from four components, clipped to [-1.0, 1.0]:
+The reward is an **additive heuristic** computed from four components, clipped to $[-1, 1]$:
 
-```
-reward = clip(
-    constraint_satisfaction × 0.4  +
-    wcag_contrast          × 0.2  +
-    (−overlap_penalty)     × 0.2  +
-    alignment_score        × 0.2,
-    −1.0, 1.0
-)
-```
+$$R = \text{clip}\Big(0.4 \cdot S_{\text{constraint}} + 0.2 \cdot S_{\text{contrast}} - 0.2 \cdot P_{\text{overlap}} + 0.2 \cdot S_{\text{alignment}},\; -1,\; 1\Big)$$
 
 ### Components
 
-**Constraint Satisfaction (40%)**: The largest weight because it captures the primary objective — did the agent build what was requested? Each constraint (required headline, subtitle, button, background color) is checked and scored. Partial credit is given for substring matches (0.5) vs exact matches (1.0). Constraints are weighted by importance (headline=2.0, subtitle=1.5, button=1.5, structural=0.5).
+**Constraint Satisfaction** $S_{\text{constraint}} \in [0, 1]$, **weight = 0.4**
 
-**WCAG Contrast (20%)**: For each text element, we compute the WCAG 2.1 contrast ratio between text color and background color. Ratios ≥ 4.5 score 1.0 (AA pass), ≥ 3.0 score 0.5 (large text only), < 3.0 score 0.0. This incentivizes readable text without being overly prescriptive about color choices.
+The largest weight because it captures the primary objective — did the agent build what was requested? Each constraint $c_i$ (required headline, subtitle, button, background color) is checked and scored:
 
-**Overlap Penalty (20%, subtracted)**: Pairwise IoU (Intersection over Union) is computed for all element pairs. IoU > 0.1 contributes to the penalty. This discourages illegible element stacking. We explicitly exempt: (a) full-canvas background shapes (IoU with small elements is naturally low anyway), and (b) "button pattern" pairs (a shape and text element at the same position forming a button).
+$$S_{\text{constraint}} = \frac{\sum_{i=1}^{N} w_i \cdot s_i}{\sum_{i=1}^{N} w_i}$$
 
-**Alignment Score (20%)**: Three sub-components: horizontal centering (are elements centered on the canvas?), vertical distribution (are vertical gaps between elements even?), and edge margins (do elements maintain ≥10px from canvas edges?). This rewards visually balanced layouts.
+where $s_i \in \{0, 0.5, 1\}$ (no match, substring match, exact match) and $w_i$ is the constraint importance weight (headline=2.0, subtitle=1.5, button=1.5, structural=0.5).
+
+**WCAG Contrast** $S_{\text{contrast}} \in [0, 1]$, **weight = 0.2**
+
+For each text element $t_j$, we compute the WCAG 2.1 contrast ratio $CR_j$ between text color and background color:
+
+$$S_{\text{contrast}} = \frac{1}{M} \sum_{j=1}^{M} \begin{cases} 1.0 & \text{if } CR_j \geq 4.5 \text{ (AA pass)} \\ 0.5 & \text{if } CR_j \geq 3.0 \text{ (large text only)} \\ 0.0 & \text{otherwise} \end{cases}$$
+
+where $CR = \frac{L_1 + 0.05}{L_2 + 0.05}$ with $L_1, L_2$ being the relative luminances of the lighter and darker colors respectively.
+
+**Overlap Penalty** $P_{\text{overlap}} \in [0, 1]$, **weight = 0.2 (subtracted)**
+
+Pairwise IoU (Intersection over Union) is computed for all element pairs $(e_i, e_j)$:
+
+$$P_{\text{overlap}} = \frac{1}{K} \sum_{(i,j)} \mathbb{1}\left[\text{IoU}(e_i, e_j) > 0.1\right]$$
+
+where $K = \binom{n}{2}$ is the number of element pairs. This discourages illegible element stacking. We explicitly exempt: (a) full-canvas background shapes (IoU with small elements is naturally low), and (b) "button pattern" pairs (a shape and text element at the same position forming a button).
+
+**Alignment Score** $S_{\text{alignment}} \in [0, 1]$, **weight = 0.2**
+
+Three sub-components averaged:
+
+$$S_{\text{alignment}} = \frac{1}{3}\left(S_{\text{centering}} + S_{\text{distribution}} + S_{\text{margin}}\right)$$
+
+where $S_{\text{centering}}$ measures horizontal centering on the canvas, $S_{\text{distribution}}$ measures evenness of vertical gaps between elements, and $S_{\text{margin}}$ checks that elements maintain $\geq 10\text{px}$ from canvas edges.
 
 ### Potential Reward Hacking
 
