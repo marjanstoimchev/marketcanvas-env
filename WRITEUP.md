@@ -41,6 +41,92 @@ start_mcp.sh                # Conda wrapper for MCP server startup
 .mcp.json                   # MCP config for Claude Code (optional)
 ```
 
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        Client Layer                             │
+│                                                                 │
+│   ┌──────────────┐   ┌──────────────┐   ┌──────────────────┐   │
+│   │  Claude Code  │   │ Claude       │   │  demo.py /       │   │
+│   │  (via MCP)    │   │ Desktop      │   │  custom script   │   │
+│   └──────┬───────┘   └──────┬───────┘   └────────┬─────────┘   │
+│          │                  │                     │             │
+└──────────┼──────────────────┼─────────────────────┼─────────────┘
+           │ MCP (stdio)      │ MCP (stdio)         │ Python API
+           ▼                  ▼                     ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                     MCP Server Layer                            │
+│                                                                 │
+│   mcp_server.py → FastMCP with 5 tools:                        │
+│   ┌────────────┐ ┌───────────────┐ ┌──────────────────┐        │
+│   │ reset_env  │ │ execute_action│ │ get_canvas_state │        │
+│   └────────────┘ └───────────────┘ └──────────────────┘        │
+│   ┌──────────────────┐ ┌───────────────┐                       │
+│   │ get_current_reward│ │ render_canvas │                       │
+│   └──────────────────┘ └───────────────┘                       │
+│                                                                 │
+└─────────────────────────────┬───────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                   Environment Layer                             │
+│                                                                 │
+│   environment.py → CanvasEnv                                    │
+│   ┌──────────┐  ┌──────────┐  ┌──────────────────────────┐     │
+│   │ reset()  │  │  step()  │  │ get_reward_breakdown()   │     │
+│   └──────────┘  └──────────┘  └──────────────────────────┘     │
+│                                                                 │
+│   Episode: reset → step → step → ... → terminated/truncated    │
+│                                                                 │
+└──────┬──────────────┬───────────────┬───────────────┬───────────┘
+       │              │               │               │
+       ▼              ▼               ▼               ▼
+┌────────────┐ ┌────────────┐ ┌─────────────┐ ┌────────────┐
+│  Canvas    │ │  Actions   │ │   Reward    │ │  Renderer  │
+│  Engine    │ │            │ │   Function  │ │            │
+│            │ │ 7 action   │ │             │ │  Pillow    │
+│ Elements   │ │ types with │ │ 4 components│ │  PNG       │
+│ CRUD ops   │ │ validation │ │ clipped to  │ │  rendering │
+│ 800x600    │ │            │ │ [-1, 1]     │ │            │
+├────────────┤ ├────────────┤ ├─────────────┤ ├────────────┤
+│canvas_     │ │actions.py  │ │reward.py    │ │renderer.py │
+│engine.py   │ │            │ │             │ │            │
+└────────────┘ └────────────┘ └──────┬──────┘ └────────────┘
+                                     │
+                              ┌──────┴──────┐
+                              ▼             ▼
+                       ┌────────────┐ ┌────────────┐
+                       │ Constraints│ │ Color      │
+                       │            │ │ Utils      │
+                       │ NLP prompt │ │            │
+                       │ → design   │ │ WCAG       │
+                       │ constraints│ │ contrast   │
+                       ├────────────┤ ├────────────┤
+                       │constraints │ │color_      │
+                       │.py         │ │utils.py    │
+                       └────────────┘ └────────────┘
+```
+
+**Data flow for a single step:**
+
+```
+Client prompt                    "Add blue background"
+       │
+       ▼
+MCP Server                       Parses into action dict
+       │
+       ▼
+CanvasEnv.step()                  Validates action
+       │
+       ├──► CanvasEngine          Adds/modifies element
+       ├──► Reward Function       Scores canvas (constraints + contrast + overlap + alignment)
+       └──► Observation           Returns JSON state + reward + done flag
+              │
+              ▼
+Client receives                   Decides next action based on reward
+```
+
 ## MCP Server
 
 The MCP server exposes 5 tools via the Model Context Protocol:
