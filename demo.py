@@ -183,7 +183,7 @@ def main():
         print(f"    centering={a['centering']}, distribution={a['distribution']}, margin={a['margin']}")
 
     # 7. Render to PNG
-    output_path = "demo_output.png"
+    output_path = "figures/demo_output.png"
     env.render(output_path)
     print()
     print(f"Canvas rendered to: {output_path}")

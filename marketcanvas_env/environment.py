@@ -45,7 +45,7 @@ class CanvasEnv:
             if result.terminated or result.truncated:
                 break
 
-        env.render("output.png")
+        env.render("figures/output.png")
     """
 
     def __init__(

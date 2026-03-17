@@ -174,7 +174,7 @@ class MCPServer:
             ),
         )
         def render_canvas_tool(
-            output_path: str = "/home/marjans/task/canvas_output.png",
+            output_path: str = "figures/canvas_output.png",
         ) -> dict[str, Any]:
             try:
                 self.env.render(output_path)

@@ -53,7 +53,9 @@ def render_canvas(
             _render_image_element(draw, elem, img)
 
     if output_path is not None:
-        img.save(str(output_path), "PNG")
+        out = Path(output_path)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        img.save(str(out), "PNG")
 
     return img
 

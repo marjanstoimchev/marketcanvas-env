@@ -10,7 +10,7 @@ conda activate marketcanvas
 # 2. Install dependencies
 pip install -r requirements.txt
 
-# 3. Run the demo (designs a "Summer Sale" banner, saves demo_output.png)
+# 3. Run the demo (designs a "Summer Sale" banner, saves figures/demo_output.png)
 python demo.py
 
 # 4. Run the test suite (validates all MCP tools)

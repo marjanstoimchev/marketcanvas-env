@@ -1,8 +1,8 @@
 __pycache__/
 *.pyc
 *.pyo
-*.png
 *.egg-info/
 dist/
 build/
 .eggs/
+figures/*.png
