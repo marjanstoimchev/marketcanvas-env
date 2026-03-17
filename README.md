@@ -94,6 +94,20 @@ subtitle "Limited Time Only", and a "Shop Now" button on a blue background.
 
 Claude will autonomously call the MCP tools to build the banner, check rewards, and render the result.
 
+## Example Outputs
+
+**Demo banner** (`python demo.py`):
+
+![Demo Output](figures/demo_output.png)
+
+**Claude Code via MCP** — Summer Sale banner (reward: 0.80):
+
+![Summer Sale Banner](figures/summer_sale_banner.png)
+
+**Claude Code via MCP** — Product Launch banner:
+
+![Product Launch Banner](figures/product_launch_banner.png)
+
 ## Project Structure
 
 ```
