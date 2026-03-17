@@ -1,5 +1,7 @@
 # MarketCanvas-Env
 
+[![Tests](https://github.com/marjanstoimchev/marketcanvas-env/actions/workflows/tests.yml/badge.svg)](https://github.com/marjanstoimchev/marketcanvas-env/actions/workflows/tests.yml)
+
 A minimalist 2D design canvas that serves as both a **Gymnasium-like RL environment** and an **MCP server**, enabling LLM agents to design marketing banners via tool-calling with a heuristic reward function scoring the result.
 
 ## Architecture
