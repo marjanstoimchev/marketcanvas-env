@@ -84,7 +84,7 @@ python run_mcp_server.py
 The `.mcp.json` config is included. To connect:
 
 1. Edit `start_mcp.sh` — set `CONDA_PATH` to your conda installation
-2. Open Claude Code in the project directory, run `/mcp` to enable
+2. Open Claude Code in the project directory, run `/mcp` — approve `marketcanvas-env` when prompted
 3. Ask Claude to design a banner:
 
 ```

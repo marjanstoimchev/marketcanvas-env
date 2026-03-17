@@ -1,6 +1,6 @@
 {
   "mcpServers": {
-    "marketcanvas": {
+    "marketcanvas-env": {
       "command": "bash",
       "args": ["./start_mcp.sh"]
     }

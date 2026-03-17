@@ -160,7 +160,7 @@ To let Claude interact with the canvas directly via tool-calling:
 ```json
 {
   "mcpServers": {
-    "marketcanvas": {
+    "marketcanvas-env": {
       "command": "bash",
       "args": ["./start_mcp.sh"]
     }
@@ -179,24 +179,53 @@ cd "$(dirname "$0")"
 exec python run_mcp_server.py
 ```
 
-**3.** Open Claude Code in the project directory and run `/mcp`. You should see `marketcanvas` with 5 tools listed.
+**3.** Open Claude Code in the project directory and run `/mcp`. You should see `marketcanvas-env` with 5 tools listed. On first use, Claude Code will ask you to approve the MCP server — select "Use this and all future MCP servers in this project."
 
-**4. Using it** — once connected, prompt Claude to design a banner. Example session:
+**4. Using it** — once connected, prompt Claude to design a banner. Example:
 
 ```
 You: Design a Summer Sale banner with a headline "50% Off Everything",
      a subtitle "Limited Time Only", and a "Shop Now" button on a blue background.
 ```
 
-Claude will then autonomously:
-1. Call `reset_env` with the target prompt to start an episode
-2. Call `execute_action` repeatedly to add elements (background, headline, subtitle, button)
-3. Call `get_current_reward` to check the score and adjust the design
-4. Call `render_canvas` to save the final result as a PNG
+Claude will autonomously call the MCP tools to build the banner, check rewards, and iterate on the layout. Here is an example of the expected output:
+
+```
+The Summer Sale banner is complete. Here's the final result:
+
+Total Reward: 0.80 (maximum achievable)
+
+┌─────────────────┬────────────────────────────────────────────────┐
+│     Metric      │                     Score                      │
+├─────────────────┼────────────────────────────────────────────────┤
+│ Constraints     │ 1.0 (all 7/7 satisfied)                        │
+├─────────────────┼────────────────────────────────────────────────┤
+│ WCAG Contrast   │ 1.0 (all text passes)                          │
+├─────────────────┼────────────────────────────────────────────────┤
+│ Overlap Penalty │ 0.0 (none)                                     │
+├─────────────────┼────────────────────────────────────────────────┤
+│ Alignment       │ 1.0 (centering: 1, distribution: 1, margin: 1) │
+└─────────────────┴────────────────────────────────────────────────┘
+
+Layout:
+- Blue (#0066CC) full-canvas background
+- "50% Off Everything" headline in white, centered
+- "Limited Time Only" subtitle in white, centered below
+- "Shop Now" button in orange (#FF6600) with black text, evenly spaced below
+
+All text meets WCAG contrast requirements (5.57:1 for white-on-blue,
+7.15:1 for black-on-orange). The banner is saved to figures/summer_sale_banner.png.
+```
+
+Claude autonomously:
+1. Calls `reset_env` with the target prompt to start an episode
+2. Calls `execute_action` repeatedly to add elements (background, headline, subtitle, button)
+3. Calls `get_current_reward` to check the score and adjust the design
+4. Calls `render_canvas` to save the final result as a PNG
 
 Each action returns the current reward so Claude can iteratively improve the layout. A well-designed banner typically scores > 0.6.
 
-**Disconnect** — to disable the MCP connection without deleting the config, run `/mcp` in Claude Code and remove the `marketcanvas` server.
+**Disconnect** — to disable the MCP connection without deleting the config, run `/mcp` in Claude Code and remove the `marketcanvas-env` server.
 
 **Cleanup** — to fully remove:
 
